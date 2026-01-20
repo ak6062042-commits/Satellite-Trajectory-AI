@@ -1,12 +1,11 @@
 import math
-from random import randint as rndi
 
-MU = 2000
+MU = 1800
 
 def gravity_force(position):
     x, y = position
     r2 = x*x + y*y
-    if r2 == 0:
+    if r2 < 1:
         return (0.0, 0.0)
     r = math.sqrt(r2)
     g = -MU / r2

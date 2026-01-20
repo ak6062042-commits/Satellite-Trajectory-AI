@@ -1,9 +1,9 @@
-import math
 import matplotlib.pyplot as plt
-import numpy as np
+import math
 from physics.body import Body
 from environment.gravity import gravity_force
-from control.thruster import thrust_vector
+from control.thrust import thrust_vector
+from environment.space import Space
 
 class Simulator:
     def __init__(self, config, ga, astar):
@@ -11,108 +11,78 @@ class Simulator:
         self.ga = ga
         self.astar = astar
         self.body = Body(config.START, config.INITIAL_VELOCITY)
+        self.space = Space(config.TARGET)
         self.dt = config.DT
 
     def run(self):
-        trajectory = []
-        print(f"Start: ({self.config.START[0]:.2f}, {self.config.START[1]:.2f})")
-        print(f"Target: ({self.config.TARGET[0]:.2f}, {self.config.TARGET[1]:.2f})")
+        traj = []
+        step = 0
 
-        start_state = (
-            self.body.position[0],
-            self.body.position[1],
-            self.body.velocity[0],
-            self.body.velocity[1]
-        )
-        waypoint = self.ga.evolve(start_state)
-        waypoint = (round(float(waypoint[0])), round(float(waypoint[1])))
-        print(f"GA waypoint selected: ({waypoint[0]:.2f}, {waypoint[1]:.2f})")
+        print(f"START pos=({self.body.position[0]:.2f},{self.body.position[1]:.2f}) "
+              f"fuel={self.body.fuel:.2f}")
 
-        path1 = self.astar.plan(start_state, waypoint)
-        path2 = self.astar.plan((waypoint[0], waypoint[1], 0, 0), self.config.TARGET)
-        full_path = path1 + path2[1:]
-        print(f"A* expanded path length: {len(full_path)} nodes")
+        while step < self.config.STEPS:
+            speed = math.hypot(self.body.velocity[0], self.body.velocity[1])
 
-        smoothed_path = self.smooth_path(full_path)
-        smooth_more = self.smooth_path(smoothed_path)
+            if self.body.fuel <= 0:
+                print("TERMINATED: fuel exhausted")
+                break
 
-        for i in range(len(smooth_more)):
-            target_index = min(i + self.config.LOOKAHEAD, len(smooth_more) - 1)
-            target_node = smooth_more[target_index]
+            if speed > 30:
+                print("TERMINATED: unstable velocity")
+                break
 
-            dx = target_node[0] - self.body.position[0]
-            dy = target_node[1] - self.body.position[1]
-            dist = math.hypot(dx, dy)
-
-            if self.body.fuel <= 1.0:
-                print(" Simulation stopped: fuel exhausted.")
-                return trajectory
-
-            if dist > self.config.MAX_DISTANCE:
-                print(" Force stop: satellite drifted too far.")
-                return trajectory
-
-            while dist >= 0.5 and self.body.fuel > 0:
-                g = gravity_force(self.body.position)
-                thrust = thrust_vector(target_node, self.body)
-
-                fx = g[0] + 0.7 * thrust[0]
-                fy = g[1] + 0.7 * thrust[1]
-
-                self.body.apply_force((fx, fy), self.dt)
-                trajectory.append((float(self.body.position[0]), float(self.body.position[1])))
-
-                dx = target_node[0] - self.body.position[0]
-                dy = target_node[1] - self.body.position[1]
-                dist = math.hypot(dx, dy)
-
-                if len(trajectory) % 50 == 0:
-                    print(
-                        f"Step {len(trajectory)} | "
-                        f"Pos ({self.body.position[0]:.2f}, {self.body.position[1]:.2f}) | "
-                        f"Vel ({self.body.velocity[0]:.2f}, {self.body.velocity[1]:.2f}) | "
-                        f"Fuel {self.body.fuel:.2f}"
-                    )
-
-            print(
-                f"Reached node ({target_node[0]:.2f}, {target_node[1]:.2f}) | "
-                f"Vel ({self.body.velocity[0]:.2f}, {self.body.velocity[1]:.2f}) | "
-                f"Fuel {self.body.fuel:.2f}"
+            state = (
+                self.body.position[0],
+                self.body.position[1],
+                self.body.velocity[0],
+                self.body.velocity[1]
             )
 
-        print(
-            f"\nReached target ({self.config.TARGET[0]:.2f}, {self.config.TARGET[1]:.2f}) "
-            f"at ({self.body.position[0]:.2f}, {self.body.position[1]:.2f})"
-        )
-        print(
-            f"Final velocity: ({self.body.velocity[0]:.2f}, {self.body.velocity[1]:.2f}) | "
-            f"Fuel remaining: {self.body.fuel:.2f}"
-        )
-        return trajectory
+            waypoint = self.ga.evolve(state)
+            target = self.astar.plan(state, waypoint, gravity_force)
 
-    def smooth_path(self, path):
-        xs, ys = zip(*path)
-        xs = np.array(xs)
-        ys = np.array(ys)
+            g = gravity_force(self.body.position)
+            thrust = thrust_vector(target, self.body)
 
-        t = np.linspace(0, 1, len(xs))
-        spline_x = np.interp(np.linspace(0, 1, len(xs) * 5), t, xs)
-        spline_y = np.interp(np.linspace(0, 1, len(ys) * 5), t, ys)
+            fx = g[0] + thrust[0]
+            fy = g[1] + thrust[1]
 
-        return list(zip(spline_x, spline_y))
+            prev_fuel = self.body.fuel
+            self.body.step((fx, fy), self.dt)
 
-    def plot(self, trajectory):
-        if not trajectory:
-            print("No trajectory generated.")
+            traj.append((self.body.position[0], self.body.position[1]))
+
+            dist = math.hypot(
+                self.body.position[0] - self.config.TARGET[0],
+                self.body.position[1] - self.config.TARGET[1]
+            )
+
+            print(
+                f"STEP {step:04d} "
+                f"pos=({self.body.position[0]:.2f},{self.body.position[1]:.2f}) "
+                f"vel={speed:.2f} "
+                f"fuel_used={(prev_fuel - self.body.fuel):.3f} "
+                f"fuel_left={self.body.fuel:.2f} "
+                f"dist={dist:.2f}"
+            )
+
+            if self.space.captured(self.body.position, self.body.velocity):
+                print("TARGET CAPTURED")
+                break
+
+            step += 1
+
+        return traj
+
+    def plot(self, traj):
+        if not traj:
+            print("No trajectory")
             return
-        xs, ys = zip(*trajectory)
-        plt.figure()
-        plt.plot(xs, ys, linewidth=2, label="Trajectory")
-        plt.scatter(self.config.START[0], self.config.START[1], c="green", s=80, label="Start")
-        plt.scatter(self.config.TARGET[0], self.config.TARGET[1], c="red", s=100, label="Target")
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.title("Smoothed GA + A* Orbit with Physics")
-        plt.legend()
+        xs, ys = zip(*traj)
+        plt.figure(figsize=(7,7))
+        plt.plot(xs, ys)
+        plt.scatter(self.config.START[0], self.config.START[1])
+        plt.scatter(self.config.TARGET[0], self.config.TARGET[1])
         plt.grid(True)
         plt.show()

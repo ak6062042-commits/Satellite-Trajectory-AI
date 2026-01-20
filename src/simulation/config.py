@@ -4,14 +4,9 @@ class Config:
     SPACE_WIDTH = 400
     SPACE_HEIGHT = 400
 
-    START = (random.uniform(0, SPACE_WIDTH), random.uniform(0, SPACE_HEIGHT))
-    TARGET = (random.uniform(0, SPACE_WIDTH), random.uniform(0, SPACE_HEIGHT))
+    START = (random.uniform(50, 350), random.uniform(50, 350))
+    TARGET = (random.uniform(50, 350), random.uniform(50, 350))
 
     INITIAL_VELOCITY = (0.0, 0.0)
     DT = 0.05
-    STEPS = 3000
-
-    CAPTURE_RADIUS = 1.0
-    CAPTURE_SPEED = 0.5
-    MAX_DISTANCE = 1000.0
-    LOOKAHEAD = 3  
+    STEPS = 4000

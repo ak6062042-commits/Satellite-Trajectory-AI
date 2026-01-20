@@ -2,25 +2,30 @@ import random
 from ai.fitness import evaluate_waypoint
 
 class GeneticPlanner:
-    def __init__(self, config):
+    def __init__(self, config, gravity_fn):
         self.config = config
+        self.gravity_fn = gravity_fn
 
-    def evolve(self, start):
+    def evolve(self, state):
         population = [
             (
                 random.uniform(0, self.config.SPACE_WIDTH),
                 random.uniform(0, self.config.SPACE_HEIGHT)
             )
-            for _ in range(30)
+            for _ in range(40)
         ]
-        for _ in range(20):
-            scored = [(evaluate_waypoint(start, wp), wp) for wp in population]
+
+        for _ in range(25):
+            scored = [(evaluate_waypoint(state, wp, self.gravity_fn), wp) for wp in population]
             scored.sort(key=lambda x: x[0])
-            population = [wp for _, wp in scored[:15]]
-            while len(population) < 30:
-                x, y = random.choice(population)
+            elite = [wp for _, wp in scored[:15]]
+
+            population = elite[:]
+            while len(population) < 40:
+                x, y = random.choice(elite)
                 population.append((
-                    x + random.uniform(-30, 30),
-                    y + random.uniform(-30, 30)
+                    x + random.uniform(-40, 40),
+                    y + random.uniform(-40, 40)
                 ))
+
         return population[0]

@@ -1,2 +1,2 @@
-def compute_acceleration(body, force):
-    return (force[0] / body.mass, force[1] / body.mass)
+def acceleration(force, mass):
+    return (force[0] / mass, force[1] / mass)
