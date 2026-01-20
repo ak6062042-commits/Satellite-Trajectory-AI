@@ -37,22 +37,23 @@ class Simulator:
 
         # Step 3: Smooth path
         smoothed_path = self.smooth_path(full_path)
+        smooth_more = self.smooth_path(smoothed_path)
 
         # Step 4: Physics execution
-        for i in range(len(smoothed_path)):
-            target_index = min(i + self.config.LOOKAHEAD, len(smoothed_path) - 1)
-            target_node = smoothed_path[target_index]
+        for i in range(len(smooth_more)):
+            target_index = min(i + self.config.LOOKAHEAD, len(smooth_more) - 1)
+            target_node = smooth_more[target_index]
 
             dx = target_node[0] - self.body.position[0]
             dy = target_node[1] - self.body.position[1]
             dist = math.hypot(dx, dy)
 
-            if self.body.fuel <= 1:
-                print("❌ Simulation stopped: fuel exhausted.")
+            if self.body.fuel <= 1.5:
+                print(" Simulation stopped: fuel exhausted.")
                 return trajectory
 
             if dist > self.config.MAX_DISTANCE:
-                print("❌ Force stop: satellite drifted too far.")
+                print(" Force stop: satellite drifted too far.")
                 return trajectory
 
             while dist >= 0.5 and self.body.fuel > 0:
@@ -84,7 +85,7 @@ class Simulator:
             )
 
         print(
-            f"\n✅ Reached target ({self.config.TARGET[0]:.2f}, {self.config.TARGET[1]:.2f}) "
+            f"\nReached target ({self.config.TARGET[0]:.2f}, {self.config.TARGET[1]:.2f}) "
             f"at ({self.body.position[0]:.2f}, {self.body.position[1]:.2f})"
         )
         print(
