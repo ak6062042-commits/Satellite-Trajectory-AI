@@ -1,6 +1,6 @@
 import math
 
-MAX_THRUST = 40.0          
+MAX_THRUST = 25.0          
 FUEL_RATE = 0.03           
 
 def thrust_vector(target, body):

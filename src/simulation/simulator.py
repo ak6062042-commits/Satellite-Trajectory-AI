@@ -62,7 +62,7 @@ class Simulator:
                 f"STEP {step:04d} "
                 f"pos=({self.body.position[0]:.2f},{self.body.position[1]:.2f}) "
                 f"vel={speed:.2f} "
-                f"fuel_used={(prev_fuel - self.body.fuel):.3f} "
+                f"fuel_used={(prev_fuel - self.body.fuel):.2f} "
                 f"fuel_left={self.body.fuel:.2f} "
                 f"dist={dist:.2f}"
             )

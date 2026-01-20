@@ -1,6 +1,6 @@
 import math
 
-MU = 800
+MU = 1800
 
 def gravity_force(position):
     x, y = position
