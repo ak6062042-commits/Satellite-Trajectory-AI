@@ -1,8 +1,8 @@
 import random
 
 class Config:
-    SPACE_WIDTH = 500
-    SPACE_HEIGHT = 500
+    SPACE_WIDTH = 400
+    SPACE_HEIGHT = 400
 
     START = (random.uniform(0, SPACE_WIDTH), random.uniform(0, SPACE_HEIGHT))
     TARGET = (random.uniform(0, SPACE_WIDTH), random.uniform(0, SPACE_HEIGHT))
@@ -14,4 +14,4 @@ class Config:
     CAPTURE_RADIUS = 1.0
     CAPTURE_SPEED = 0.5
     MAX_DISTANCE = 1000.0
-    LOOKAHEAD = 3  # how many nodes ahead to target
+    LOOKAHEAD = 3  

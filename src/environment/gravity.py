@@ -1,6 +1,7 @@
 import math
+from random import randint as rndi
 
-MU = 2000.0
+MU = 2000
 
 def gravity_force(position):
     x, y = position

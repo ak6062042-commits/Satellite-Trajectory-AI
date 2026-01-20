@@ -18,7 +18,6 @@ class Simulator:
         print(f"Start: ({self.config.START[0]:.2f}, {self.config.START[1]:.2f})")
         print(f"Target: ({self.config.TARGET[0]:.2f}, {self.config.TARGET[1]:.2f})")
 
-        # Step 1: GA selects waypoint
         start_state = (
             self.body.position[0],
             self.body.position[1],
@@ -29,17 +28,14 @@ class Simulator:
         waypoint = (round(float(waypoint[0])), round(float(waypoint[1])))
         print(f"GA waypoint selected: ({waypoint[0]:.2f}, {waypoint[1]:.2f})")
 
-        # Step 2: A* expands path
         path1 = self.astar.plan(start_state, waypoint)
         path2 = self.astar.plan((waypoint[0], waypoint[1], 0, 0), self.config.TARGET)
         full_path = path1 + path2[1:]
         print(f"A* expanded path length: {len(full_path)} nodes")
 
-        # Step 3: Smooth path
         smoothed_path = self.smooth_path(full_path)
         smooth_more = self.smooth_path(smoothed_path)
 
-        # Step 4: Physics execution
         for i in range(len(smooth_more)):
             target_index = min(i + self.config.LOOKAHEAD, len(smooth_more) - 1)
             target_node = smooth_more[target_index]
@@ -48,7 +44,7 @@ class Simulator:
             dy = target_node[1] - self.body.position[1]
             dist = math.hypot(dx, dy)
 
-            if self.body.fuel <= 1.5:
+            if self.body.fuel <= 1.0:
                 print(" Simulation stopped: fuel exhausted.")
                 return trajectory
 
