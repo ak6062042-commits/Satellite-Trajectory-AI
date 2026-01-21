@@ -1,16 +1,15 @@
-from simulation.config import Config
+# main.py
 from simulation.simulator import Simulator
-from ai.genetic import GeneticPlanner
-from ai.astar import AStarPlanner
-from environment.gravity import gravity_force
+from utils.utils import plot
 
 def main():
-    config = Config()
-    ga = GeneticPlanner(config, gravity_force)
-    astar = AStarPlanner()
-    sim = Simulator(config, ga, astar)
-    traj = sim.run()
-    sim.plot(traj)
+    start = (-250, -250, 0.0, 2.5)
+    target = (200, 150)
+
+    sim = Simulator(start, target)
+    path = sim.run()
+
+    plot(path, target)
 
 if __name__ == "__main__":
     main()

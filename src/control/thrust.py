@@ -1,36 +1,44 @@
 import math
 
-MAX_THRUST = 25.0          
-FUEL_RATE = 0.03           
+MAX_THRUST = 18.0
+FUEL_RATE = 0.03
 
 def thrust_vector(target, body):
     if body.fuel <= 0:
         return (0.0, 0.0)
 
-    tx = target[0] - body.position[0]
-    ty = target[1] - body.position[1]
+    dx = target[0] - body.position[0]
+    dy = target[1] - body.position[1]
 
-    dist = math.hypot(tx, ty)
-    if dist < 1e-3:
+    vx, vy = body.velocity
+
+    dist = math.hypot(dx, dy)
+    speed = math.hypot(vx, vy)
+
+    if dist > 1e-6:
+        dx /= dist
+        dy /= dist
+
+    tx = dx - 0.9 * vx
+    ty = dy - 0.9 * vy
+
+    mag = math.hypot(tx, ty)
+    if mag < 1e-6:
         return (0.0, 0.0)
 
-    # Direction to target
-    dx = tx / dist
-    dy = ty / dist
+    tx /= mag
+    ty /= mag
 
-    speed = math.hypot(body.velocity[0], body.velocity[1])
+    thrust = MAX_THRUST
+    if dist < 30:
+        thrust *= 0.5
+    if dist < 10:
+        thrust *= 0.2
 
-    # Braking near target
-    if dist < 25:
-        dx = -body.velocity[0]
-        dy = -body.velocity[1]
-        mag = math.hypot(dx, dy)
-        if mag > 1e-6:
-            dx /= mag
-            dy /= mag
-        thrust = MAX_THRUST * 1.3   # stronger braking
-    else:
-        thrust = MAX_THRUST
+    fuel_cost = thrust * FUEL_RATE
+    if body.fuel < fuel_cost:
+        thrust *= body.fuel / fuel_cost
+        fuel_cost = body.fuel
 
-    body.fuel -= FUEL_RATE * thrust
-    return (dx * thrust, dy * thrust)
+    body.fuel -= fuel_cost
+    return (tx * thrust, ty * thrust)

@@ -1,13 +1,13 @@
 import math
 
-def evaluate_waypoint(state, waypoint, gravity_fn):
-    sx, sy, vx, vy = state
+def evaluate_waypoint(state, waypoint):
+    x, y, vx, vy = state
     wx, wy = waypoint
 
-    d = math.hypot(wx - sx, wy - sy)
-    v = math.hypot(vx, vy)
+    dx = wx - x
+    dy = wy - y
+    dist = math.hypot(dx, dy)
 
-    gx, gy = gravity_fn((sx, sy))
-    align = abs((gx*(wx-sx) + gy*(wy-sy)) / (d + 1e-6))
+    kinetic = 0.5 * (vx*vx + vy*vy)
 
-    return d + 0.4*v - 2.0*align
+    return dist + 0.4 * kinetic

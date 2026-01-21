@@ -1,12 +1,23 @@
-import random
+# config.py
 
-class Config:
-    SPACE_WIDTH = 400
-    SPACE_HEIGHT = 400
+DT = 0.1
+MAX_STEPS = 4000
 
-    START = (random.uniform(50, 350), random.uniform(50, 350))
-    TARGET = (random.uniform(50, 350), random.uniform(50, 350))
+# Spacecraft
+MAX_THRUST = 40.0
+MAX_FUEL = 10000.0
+FUEL_COST_PER_THRUST = 0.02
+MASS = 1.0
 
-    INITIAL_VELOCITY = (0.0, 0.0)
-    DT = 0.05
-    STEPS = 4000
+# Gravity body (planet)
+GRAVITY_MU = 5000.0
+PLANET_POS = (0.0, 0.0)
+
+# A*
+GRID_V = 2.0          # velocity discretization
+GRID_POS = 5.0        # position discretization
+ASTAR_MAX_NODES = 30000
+
+# GA
+GA_POP = 40
+GA_GEN = 40
