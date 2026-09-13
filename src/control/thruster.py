@@ -1,36 +1,49 @@
 import math
 
-def thrust_vector(target, body):
-    if body.fuel <= 0:
-        return (0.0, 0.0)
+from utils.utils import magnitude
 
+
+class Thruster:
+    def __init__(self, max_force=6.0, fuel_rate=0.12, velocity_gain=1.8, max_speed=10.0):
+        self.max_force = float(max_force)
+        self.fuel_rate = float(fuel_rate)
+        self.velocity_gain = float(velocity_gain)
+        self.max_speed = float(max_speed)
+
+    def command(self, target, body, dt):
+        if body.fuel <= 0 or dt <= 0:
+            return (0.0, 0.0)
+        dx = target[0] - body.position[0]
+        dy = target[1] - body.position[1]
+        distance = math.hypot(dx, dy)
+        if distance < 1e-9:
+            desired_velocity = (0.0, 0.0)
+        else:
+            speed = min(self.max_speed, distance * 0.8)
+            desired_velocity = (dx * speed / distance, dy * speed / distance)
+        force = (
+            body.mass * self.velocity_gain * (desired_velocity[0] - body.velocity[0]),
+            body.mass * self.velocity_gain * (desired_velocity[1] - body.velocity[1]),
+        )
+        force_size = magnitude(force)
+        if force_size > self.max_force:
+            scale = self.max_force / force_size
+            force = (force[0] * scale, force[1] * scale)
+            force_size = self.max_force
+        required_fuel = force_size * self.fuel_rate * dt
+        if required_fuel > body.fuel and required_fuel > 0:
+            scale = body.fuel / required_fuel
+            force = (force[0] * scale, force[1] * scale)
+            required_fuel = body.fuel
+        body.burn_fuel(required_fuel)
+        return force
+
+
+def thrust_vector(target, body, max_force=6.0):
     dx = target[0] - body.position[0]
     dy = target[1] - body.position[1]
-    dist = math.hypot(dx, dy)
-
-    if dist < 0.5:
+    distance = math.hypot(dx, dy)
+    if distance < 1e-9 or body.fuel <= 0:
         return (0.0, 0.0)
-
-    ux, uy = dx / dist, dy / dist
-    desired_speed = max(1.0, min(6.0, dist / 10.0))
-    desired_vx = ux * desired_speed
-    desired_vy = uy * desired_speed
-
-    ax = desired_vx - body.velocity[0]
-    ay = desired_vy - body.velocity[1]
-
-    mag = math.hypot(ax, ay)
-    if mag < 0.1:
-        return (0.0, 0.0)
-
-    max_thrust = 4.0
-    if mag > max_thrust:
-        ax, ay = (ax / mag) * max_thrust, (ay / mag) * max_thrust
-        mag = max_thrust
-
-    fuel_cost = 0.5 * mag
-    if body.fuel < fuel_cost:
-        return (0.0, 0.0)
-
-    body.fuel -= fuel_cost
-    return (ax, ay)
+    scale = max_force / distance
+    return (dx * scale, dy * scale)

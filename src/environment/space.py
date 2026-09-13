@@ -1,25 +1,21 @@
-import math
+from utils.utils import distance, magnitude
+
 
 class Space:
-    def __init__(self, width, height, target, capture_radius=2.0, deadzone_radius=0.5):
-        self.width = width
-        self.height = height
-        self.target = target
-        self.capture_radius = capture_radius
-        self.deadzone_radius = deadzone_radius
+    def __init__(self, width, height, target, capture_radius=8.0, capture_speed=1.5):
+        if width <= 0 or height <= 0:
+            raise ValueError("space dimensions must be positive")
+        self.width = float(width)
+        self.height = float(height)
+        self.target = (float(target[0]), float(target[1]))
+        self.capture_radius = float(capture_radius)
+        self.capture_speed = float(capture_speed)
 
-    def in_bounds(self, pos):
-        x, y = pos
-        return 0 <= x <= self.width and 0 <= y <= self.height
+    def in_bounds(self, position):
+        return 0.0 <= position[0] <= self.width and 0.0 <= position[1] <= self.height
 
-    def in_deadzone(self, pos):
-        dx = pos[0] - self.target[0]
-        dy = pos[1] - self.target[1]
-        return math.hypot(dx, dy) < self.deadzone_radius
+    def in_deadzone(self, position):
+        return distance(position, self.target) < self.capture_radius
 
-    def captured(self, pos, velocity):
-        dx = pos[0] - self.target[0]
-        dy = pos[1] - self.target[1]
-        dist = math.hypot(dx, dy)
-        speed = math.hypot(velocity[0], velocity[1])
-        return dist < self.capture_radius and speed < 0.5
+    def captured(self, position, velocity):
+        return self.in_deadzone(position) and magnitude(velocity) <= self.capture_speed
